@@ -137,7 +137,7 @@ class ProfileService:
         if self.db is not None:
             try:
                 existing = self.db.table("profiles").select("id").eq("user_id", user_uuid).execute()
-                if existing.data:
+                if existing and isinstance(existing.data, list) and len(existing.data) > 0:
                     existing_id = existing.data[0]["id"]
                     update_payload = {
                         "target_role": data.target_role,
@@ -152,11 +152,12 @@ class ProfileService:
                     logger.info(f"Successfully updated profile analysis for user {data.user_id} in Supabase")
                 else:
                     response = self.db.table("profiles").insert(profile_record).execute()
-                    if response.data:
+                    if response and getattr(response, "data", None):
                         logger.info(f"Successfully inserted profile analysis for user {data.user_id} in Supabase")
             except Exception as db_err:
                 logger.error(f"Supabase DB operation error for profile analysis: {db_err}")
                 raise ProfileDatabaseInsertError(f"Database operation failure: {str(db_err)}", validated_result)
+
         else:
             _in_memory_profiles[profile_record["id"]] = profile_record
 

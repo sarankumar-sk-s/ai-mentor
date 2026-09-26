@@ -1,6 +1,16 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
+from app.dependencies.auth import get_current_user
+
+@pytest.fixture(autouse=True)
+def override_auth():
+    """
+    Globally override get_current_user dependency for test suite execution.
+    """
+    app.dependency_overrides[get_current_user] = lambda: {"id": "test_user_id", "email": "test@preppilot.local"}
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
 
 @pytest.fixture
 def client():

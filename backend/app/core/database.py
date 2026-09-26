@@ -22,7 +22,8 @@ def get_supabase_client():
 
     try:
         from supabase import create_client
-        _supabase_client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+        key_to_use = settings.SUPABASE_SERVICE_KEY or settings.SUPABASE_KEY
+        _supabase_client = create_client(settings.SUPABASE_URL, key_to_use)
         logger.info("Supabase PostgreSQL client successfully initialized.")
         return _supabase_client
     except Exception as e:

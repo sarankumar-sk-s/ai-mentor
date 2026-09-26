@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from fastapi.responses import JSONResponse
 from typing import Dict, Any, List
 
@@ -14,8 +14,10 @@ from app.schemas.profile import (
 )
 from app.services.profile_service import ProfileService
 from app.dependencies import get_profile_service
+from app.dependencies.auth import get_current_user
+from app.core.rate_limit import limiter
 
-router = APIRouter(prefix="/profile", tags=["Profile"])
+router = APIRouter(prefix="/profile", tags=["Profile"], dependencies=[Depends(get_current_user)])
 
 @router.post(
     "/analyze",
@@ -63,10 +65,13 @@ router = APIRouter(prefix="/profile", tags=["Profile"])
         }
     }
 )
+@limiter.limit("10/minute")
 async def analyze_profile(
+    request: Request,
     data: ProfileAnalyzeRequest,
     service: ProfileService = Depends(get_profile_service)
 ):
+
     """
     POST /api/profile/analyze
     Analyzes candidate profile using Gemini AI structured output and stores record in Supabase.

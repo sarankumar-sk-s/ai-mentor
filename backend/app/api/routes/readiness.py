@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from typing import Dict, Any, List
 
 from app.schemas.readiness import (
@@ -10,8 +10,10 @@ from app.schemas.readiness import (
 )
 from app.services.readiness_service import ReadinessService
 from app.dependencies import get_readiness_service
+from app.dependencies.auth import get_current_user
+from app.core.rate_limit import limiter
 
-router = APIRouter(prefix="/readiness", tags=["Readiness Scores"])
+router = APIRouter(prefix="/readiness", tags=["Readiness Scores"], dependencies=[Depends(get_current_user)])
 
 @router.post(
     "/calculate",
@@ -56,10 +58,13 @@ router = APIRouter(prefix="/readiness", tags=["Readiness Scores"])
         }
     }
 )
+@limiter.limit("10/minute")
 async def calculate_readiness_score(
+    request: Request,
     data: ReadinessCalculateRequestSchema,
     service: ReadinessService = Depends(get_readiness_service)
 ):
+
     """
     POST /api/readiness/calculate
     Calculates candidate career readiness scores using transparent deterministic formulas

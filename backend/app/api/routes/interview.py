@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from typing import Dict, Any, Optional
 
 from app.schemas.interview import (
@@ -9,8 +9,10 @@ from app.schemas.interview import (
 )
 from app.services.interview_service import InterviewService
 from app.dependencies import get_interview_service
+from app.dependencies.auth import get_current_user
+from app.core.rate_limit import limiter
 
-router = APIRouter(tags=["Interviews"])
+router = APIRouter(tags=["Interviews"], dependencies=[Depends(get_current_user)])
 
 @router.post(
     "/interview/start",
@@ -18,7 +20,9 @@ router = APIRouter(tags=["Interviews"])
     status_code=status.HTTP_201_CREATED,
     summary="Start AI-Powered Mock Interview Session"
 )
+@limiter.limit("10/minute")
 async def start_interview(
+    request: Request,
     request_data: InterviewStartRequestSchema,
     service: InterviewService = Depends(get_interview_service)
 ):
@@ -49,7 +53,9 @@ async def start_interview(
     status_code=status.HTTP_200_OK,
     summary="Submit Candidate Turn Answer for Evaluation & Get Next Question"
 )
+@limiter.limit("10/minute")
 async def submit_interview_answer(
+    request: Request,
     interview_id: str,
     answer_data: InterviewAnswerRequestSchema,
     service: InterviewService = Depends(get_interview_service)
@@ -101,10 +107,13 @@ async def get_next_interview_question(
     status_code=status.HTTP_200_OK,
     summary="Finish Interview Session & Synthesize Final Feedback"
 )
+@limiter.limit("10/minute")
 async def finish_interview_session(
+    request: Request,
     interview_id: str,
     service: InterviewService = Depends(get_interview_service)
 ):
+
     """
     POST /api/interview/{interview_id}/finish
     Concludes the mock interview session. Gemini synthesizes final comprehensive feedback JSON:

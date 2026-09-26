@@ -15,6 +15,10 @@ from app.api.routes import (
     progress
 )
 
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from app.core.rate_limit import limiter, rate_limit_exceeded_handler
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -32,6 +36,11 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
+# SlowAPI Rate Limiter setup
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
 # CORS configuration for React/Vite frontend
 app.add_middleware(
     CORSMiddleware,
@@ -40,6 +49,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Global Exception Handler
 @app.exception_handler(Exception)

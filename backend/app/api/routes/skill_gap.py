@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from typing import Dict, Any, Optional
 
 from app.schemas.skill_gap import (
@@ -9,8 +9,10 @@ from app.schemas.skill_gap import (
 )
 from app.services.skill_gap_service import SkillGapService
 from app.dependencies import get_skill_gap_service
+from app.dependencies.auth import get_current_user
+from app.core.rate_limit import limiter
 
-router = APIRouter(tags=["Skill Gaps & Analysis"])
+router = APIRouter(tags=["Skill Gaps & Analysis"], dependencies=[Depends(get_current_user)])
 
 @router.post(
     "/skills/analyze",
@@ -22,11 +24,14 @@ router = APIRouter(tags=["Skill Gaps & Analysis"])
     response_model=SkillGapAnalyzeResponseSchema,
     status_code=status.HTTP_200_OK
 )
+@limiter.limit("10/minute")
 async def analyze_skill_gaps(
+    request: Request,
     profile_id: Optional[str] = "default_candidate",
     request_data: Optional[SkillGapAnalyzeRequestSchema] = None,
     service: SkillGapService = Depends(get_skill_gap_service)
 ):
+
     """
     POST /api/skills/analyze or POST /api/skills/analyze/{profile_id}
     Triggers Skill Gap Analysis engine comparing current candidate skills against target role requirements.

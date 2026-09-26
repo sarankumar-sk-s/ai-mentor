@@ -8,8 +8,10 @@ from app.schemas.progress import (
 )
 from app.services.progress_service import ProgressService
 from app.dependencies import get_progress_service
+from app.dependencies.auth import get_current_user
 
-router = APIRouter(tags=["Progress Tracking"])
+router = APIRouter(tags=["Progress Tracking"], dependencies=[Depends(get_current_user)])
+
 
 @router.get(
     "/progress/{profile_id}",

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from typing import Dict, Any, Optional
 
 from app.schemas.roadmap import (
@@ -8,8 +8,10 @@ from app.schemas.roadmap import (
 )
 from app.services.roadmap_service import RoadmapService
 from app.dependencies import get_roadmap_service
+from app.dependencies.auth import get_current_user
+from app.core.rate_limit import limiter
 
-router = APIRouter(tags=["Roadmaps"])
+router = APIRouter(tags=["Roadmaps"], dependencies=[Depends(get_current_user)])
 
 @router.post(
     "/roadmap/generate",
@@ -23,11 +25,14 @@ router = APIRouter(tags=["Roadmaps"])
     status_code=status.HTTP_200_OK,
     summary="Generate Personalized Learning Roadmap from Skill Gaps"
 )
+@limiter.limit("10/minute")
 async def generate_roadmap_for_profile(
+    request: Request,
     profile_id: Optional[str] = "default_candidate",
     body: Optional[RoadmapGenerateRequestSchema] = None,
     service: RoadmapService = Depends(get_roadmap_service)
 ):
+
     """
     POST /api/roadmap/generate or POST /api/roadmap/generate/{profile_id}
     Generate a personalized learning roadmap based on student's profile, target role,

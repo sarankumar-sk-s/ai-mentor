@@ -6,6 +6,7 @@ from app.services.assessment_service import AssessmentService
 from app.services.interview_service import InterviewService
 from app.services.readiness_service import ReadinessService
 from app.services.progress_service import ProgressService
+from app.dependencies.auth import get_current_user
 
 def get_gemini_service() -> GeminiService:
     return GeminiService()
@@ -30,3 +31,15 @@ def get_readiness_service() -> ReadinessService:
 
 def get_progress_service() -> ProgressService:
     return ProgressService()
+
+__all__ = [
+    "get_gemini_service",
+    "get_profile_service",
+    "get_skill_gap_service",
+    "get_roadmap_service",
+    "get_assessment_service",
+    "get_interview_service",
+    "get_readiness_service",
+    "get_progress_service",
+    "get_current_user",
+]

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from typing import Dict, Any
 
 from app.schemas.assessment import (
@@ -9,8 +9,10 @@ from app.schemas.assessment import (
 )
 from app.services.assessment_service import AssessmentService
 from app.dependencies import get_assessment_service
+from app.dependencies.auth import get_current_user
+from app.core.rate_limit import limiter
 
-router = APIRouter(tags=["Assessments"])
+router = APIRouter(tags=["Assessments"], dependencies=[Depends(get_current_user)])
 
 @router.post(
     "/assessment/generate",
@@ -18,7 +20,9 @@ router = APIRouter(tags=["Assessments"])
     status_code=status.HTTP_201_CREATED,
     summary="Generate Structured AI Technical Assessment"
 )
+@limiter.limit("10/minute")
 async def generate_assessment(
+    request: Request,
     request_data: AssessmentGenerateRequestSchema,
     service: AssessmentService = Depends(get_assessment_service)
 ):
@@ -62,11 +66,14 @@ async def get_assessment_by_id(
     status_code=status.HTTP_200_OK,
     summary="Submit Assessment for Deterministic & Qualitative Evaluation"
 )
+@limiter.limit("10/minute")
 async def submit_assessment(
+    request: Request,
     assessment_id: str,
     submit_data: AssessmentSubmitRequestSchema,
     service: AssessmentService = Depends(get_assessment_service)
 ):
+
     """
     POST /api/assessment/{assessment_id}/submit
     Submits candidate answers. Evaluates MCQ deterministically, performs qualitative
