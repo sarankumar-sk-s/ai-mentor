@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.api.routes import (
     health,
+    auth,
     profile,
     skill_gap,
     roadmap,
@@ -14,6 +15,7 @@ from app.api.routes import (
     readiness,
     progress
 )
+
 
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -65,7 +67,9 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Include Routers with API prefix
 app.include_router(health.router, prefix=settings.API_PREFIX)
+app.include_router(auth.router, prefix=settings.API_PREFIX)
 app.include_router(profile.router, prefix=settings.API_PREFIX)
+
 app.include_router(skill_gap.router, prefix=settings.API_PREFIX)
 app.include_router(roadmap.router, prefix=settings.API_PREFIX)
 app.include_router(assessment.router, prefix=settings.API_PREFIX)
